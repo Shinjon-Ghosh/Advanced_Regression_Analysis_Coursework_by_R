@@ -1,0 +1,48 @@
+---
+title: "Assignment 4"
+author: "Shinjon Ghosh"
+date: "2025-02-07"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library (ISLR)
+data(Hitters)
+names(Hitters)
+head(Hitters)
+str(Hitters)
+```
+```{r}
+Hitters <- na.omit(Hitters)
+```
+
+
+
+```{r}
+h1 <- lm(Salary ~ AtBat + Hits + HmRun + Runs, data = Hitters)
+summary(h1)
+```
+2. The p-value of Runs (0.830517) represents the probability of observing an intercept/slope estimate at least as extreme as what we observe here when the null hypothesis is true.
+
+```{r}
+SSTotal <- sum((Hitters$Salary - mean(Hitters$Salary))^2)
+print(paste("Total Sum of Squares (SSTotal):", SSTotal))
+```
+
+```{r}
+BIC_value <- BIC(h1)
+print(paste("Bayesian Information Criterion (BIC):", BIC_value))
+```
+
+```{r}
+new_sample <- data.frame(AtBat = 380, Hits = 96, HmRun = 8, Runs = 48)
+prediction <- predict(h1, newdata = new_sample, interval = "prediction", level = 0.95)
+print("95% Prediction Interval:")
+print(prediction)
+
+```
+Prediction Interval solved by manually and get[- 349, 1229].

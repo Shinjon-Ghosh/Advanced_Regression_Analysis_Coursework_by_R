@@ -1,0 +1,64 @@
+---
+title: "Assignment 5"
+author: "Shinjon Ghosh"
+date: "2025-02-14"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# 1. Simulate Predictor Variables
+set.seed(123)
+n <- 100
+X <- as.data.frame(matrix(rnorm(n * 10), nrow = n, ncol = 10))
+colnames(X) <- paste0("X", 1:10)
+```
+
+
+```{r}
+# 2. Calculate the Mean Parameter (mu_i)
+mu <- 1 + 2 * X$X1 + X$X2 + 0.5 * X$X5 + 1.5 * X$X10
+```
+
+
+```{r}
+# 3. Generate the Count Response (Y_i)
+Y <- rpois(n, lambda = exp(mu))
+
+```
+
+
+```{r}
+# 4. Split Data into Training and Testing Sets
+set.seed(456)
+train_index <- sample(1:n, size = 80, replace = FALSE)
+test_index <- setdiff(1:n, train_index)
+X_train <- X[train_index, ]
+X_test <- X[test_index, ]
+Y_train <- Y[train_index]
+Y_test <- Y[test_index]
+```
+
+
+```{r}
+# 5. Fit a Poisson Regression Model
+m1 <- glm(Y_train ~ X1 + X2 + X5 + X10, family = poisson(), data = X_train)
+summary(m1)
+
+```
+
+
+```{r}
+Y_pred <- predict(m1, newdata = X_test, type = "response")
+print(Y_pred)
+```
+
+```{r}
+# Compare predicted values with actual test values
+comparison <- data.frame(Actual = Y_test, Predicted = Y_pred)
+print(comparison)
+```
+

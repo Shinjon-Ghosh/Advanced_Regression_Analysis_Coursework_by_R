@@ -1,0 +1,91 @@
+---
+title: "Assignment 9"
+author: "Shinjon Ghosh"
+date: "2025-04-04"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+exer <- read.csv("https://stats.idre.ucla.edu/stat/data/exer.csv")
+ ## Convert variables to factor
+exer <- within(exer, {
+   diet <- factor(diet)
+   exertype <- factor(exertype)
+    time <- factor(time)
+    id <- factor(id)
+})
+```
+
+
+```{r}
+# Load Pacakage
+library (ggplot2)
+library(lme4)
+library(nlme)
+library(Matrix)
+```
+
+
+Question 1:
+Spaghetti plot with interaction of time, diet, and exertype
+```{r}
+ggplot(exer, aes(x = time, y = pulse, group = id, color = diet)) +
+  geom_line(alpha = 0.5) +
+  facet_wrap(~exertype) +
+  labs(title = "Interaction: Time x Diet x Exercise Type on Pulse") +
+  theme_minimal()
+
+```
+
+
+Question 2:
+Linear Model (lm)
+```{r}
+# Fit the linear model
+lm1 <- lm(pulse ~ time + diet + exertype + time:diet + time:exertype, data = exer)
+
+# Summary of the model
+summary(lm1)
+
+```
+time2:exertype3 and time3:exertype3 are significant predictors when α = 0.05. Because p-value is less than 0.05.
+
+
+Question 3:
+Linear Mixed Model
+
+```{r}
+library(lme4)
+
+lm2 <- lmer(pulse ~ time + diet + exertype*diet + exertype + (1 | id), data = exer)
+
+
+summary(lm2)
+
+```
+
+
+Question 4:
+Compare the fitted model to the Spaghetti plots
+```{r}
+exer$time_num <- as.numeric(as.character(exer$time))  # convert factor to numeric
+
+lm3 <- lmer(pulse ~ time + diet + exertype*diet + exertype + (time_num | id), data = exer)
+summary(lm3)
+
+
+```
+
+```{r}
+anova(lm2, lm3)
+```
+The p-value is < 0.05, so adding random slopes for time significantly improves model fit.
+
+The spaghetti plots illustrate that pulse trends over time differ not only by diet and exercise type but also by individual. In particular, individuals in Exercise Type 3 show steep and varied increases in pulse. The variability of slopes within each group suggests that modeling individual-specific slopes is appropriate.
+
+The random slope model (lm3) fits significantly better than the random intercept model (lm2), as indicated by the likelihood ratio test (p = 0.0022). Thus, including a random slope for time captures meaningful individual differences in pulse response over time, improving model accuracy.
+

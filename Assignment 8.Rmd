@@ -1,0 +1,92 @@
+---
+title: "Assignment 8"
+author: "Shinjon Ghosh"
+date: "2025-03-28"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+exer <- read.csv("https://stats.idre.ucla.edu/stat/data/exer.csv")
+ ## Convert variables to factor
+exer <- within(exer, {
+   diet <- factor(diet)
+   exertype <- factor(exertype)
+    time <- factor(time)
+    id <- factor(id)
+})
+ 
+```
+
+```{r}
+# Load Pacakage
+library (ggplot2)
+library(lme4)
+library(nlme)
+library(Matrix)
+```
+
+Question 1:
+```{r}
+ggplot(exer, aes(x = time, y = pulse, group = id, color = diet, linetype = diet)) +
+     geom_line(alpha = 0.6) +
+     geom_point() +
+     labs(title = "Pulse over Time by Diet Type",
+          x = "Time",
+          y = "Pulse",
+          color = "Diet Type",
+          linetype = "Diet Type") +
+     theme_minimal()
+
+```
+Conclusion: Pulse tends to rise from Time 1 to Time 3, regardless of diet type.The blue dashed lines (Diet 2) show a more upward trend, especially between Time 2 and Time 3.There’s greater spread in the pulse values for Diet 2, especially at Time 3, indicating more variation in individual responses.On the other hand, Diet Type 1 shows more clustered trends.
+
+
+Question 2:
+```{r}
+ggplot(exer, aes(x = time, y = pulse, group = id, color = exertype, linetype = exertype)) +
+     geom_line(alpha = 0.6) +
+    geom_point() +
+     labs(title = "Pulse over Time by Exercise Type",
+          x = "Time",
+          y = "Pulse",
+         color = "Exercise Type",
+          linetype = "Exercise Type") +
+     theme_minimal()
+
+```
+Conclusion:Participants in Exercise Type 3 show a sharp and consistent increase in pulse over time. Moreover, Exercise Type 2 show a mild upward trend from Time 1 to Time 3. In addition, Exercise Type 3 show minimal change in pulse over time. 
+
+
+Question 3:
+```{r}
+# Fit linear regression model
+lin <- lm(pulse ~ diet + exertype, data = exer)
+
+# View summary of the model
+summary(lin)
+
+```
+Question: 4
+```{r}
+# Linear regression model (fixed effects only)
+ lm_model <- lm(pulse ~ diet + exertype, data = exer)
+summary (lm_model)
+
+ # Linear mixed model with random intercept for id
+ lmer_model <- lmer(pulse ~ diet + exertype + (1 | id), data = exer)
+ summary (lmer_model)
+
+```
+
+```{r}
+coef(lm_model)
+coef(lmer_model)
+
+```
+

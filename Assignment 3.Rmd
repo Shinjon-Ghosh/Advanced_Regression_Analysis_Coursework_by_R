@@ -1,0 +1,80 @@
+---
+title: "Assignment 3"
+author: "Shinjon Ghosh"
+date: "2025-01-31"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+data(mtcars)
+
+## Full Model Summary
+full_model <- lm(mpg ~ cyl + hp + drat + wt, data = mtcars)
+summary(full_model)
+
+```
+
+```{r}
+## SSE, SSR, SSTO
+SSE <- sum(residuals(full_model)^2)
+SSR <- sum((fitted(full_model) - mean(mtcars$mpg))^2)
+SSTotal <- sum((mtcars$mpg - mean(mtcars$mpg))^2)
+
+cat("Predictive model:\n")
+print(full_model)
+cat("\nSSE:", SSE, "\n")
+cat("SSR:", SSR, "\n")
+cat("SSTotal:", SSTotal, "\n")
+```
+
+```{r}
+## Reduced Model Summary
+reduced_model <- lm(mpg ~ cyl + hp, data = mtcars)
+summary (reduced_model)
+
+```
+
+```{r}
+## SSR(X3,X4|X1,X2)
+SSR_X3X4_given_X1X2 <- sum(residuals(reduced_model)^2) - sum(residuals(full_model)^2)
+
+# partial R-square
+R2_full <- summary(full_model)$r.squared
+R2_reduced <- summary(reduced_model)$r.squared
+R2_partial <- (R2_full - R2_reduced) / (1 - R2_reduced)
+
+cat("SSR(X3, X4|X1, X2):", SSR_X3X4_given_X1X2, "\n")
+cat("Partial R-square (R2_34|12):", R2_partial, "\n")
+```
+
+```{r}
+# partial F-test
+f_test <- anova(reduced_model, full_model)
+print(f_test)
+
+# F-statistic and p-value
+f_statistic <- f_test$F[2]
+p_value <- f_test$`Pr(>F)`[2]
+
+cat("F-statistic:", f_statistic, "\n")
+cat("p-value:", p_value, "\n")
+
+```
+```{r}
+# Conclusion
+alpha <- 0.05  # Assuming a 5% significance level
+if (p_value < alpha) {
+  cat("Conclusion: Reject H0. There is significant evidence that at least one of β3 or β4 is not zero.\n")
+} else {
+  cat("Conclusion: Fail to reject H0. There is not enough evidence to conclude that either β3 or β4 is different from zero.\n")
+}
+```
+

@@ -1,0 +1,116 @@
+---
+title: "Assignment 7"
+author: "Shinjon Ghosh"
+date: "2025-03-21"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Load necessary libraries
+library(randomForest)
+library(xgboost)
+library(glmnet)
+
+
+```
+
+
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Simulate 100 predictor variables from standard normal distributions
+n <- 100
+p <- 100
+X <- matrix(rnorm(n * p), nrow = n, ncol = p)
+colnames(X) <- paste0("X", 1:p) 
+
+# Calculate the mean parameter µi
+mu <- 1 + 2 * X[,1] + X[,2] + 0.5 * X[,5] + 1.5 * X[,10]
+
+# Generate count response Yi from Poisson(µi)
+Y <- rpois(n, lambda = exp(mu)) 
+
+# Convert to dataframe for modeling
+dt <- data.frame(Y, X)
+```
+
+1. Fitting Random Forest and the varaible importance
+```{r}
+# Fit a random forest model
+rf_model <- randomForest(Y ~ ., data = dt, importance = TRUE)
+rf_importance <- importance(rf_model)
+rf_importance <- rf_importance[order(-rf_importance[,1]),]
+
+# Print Random Forest Variable Importance
+cat("\n\033[1mRandom Forest Variable Importance:\033[0m\n")
+print(rf_importance)
+
+# Plot Random Forest Variable Importance
+varImpPlot(rf_model, main = "Random Forest Variable Importance")
+
+```
+
+
+2. XGBoost Model and the variable importance
+```{r}
+# Fit an XGBoost model
+dtrain <- xgb.DMatrix(data = as.matrix(X), label = Y)
+params <- list(objective = "count:poisson", eval_metric = "rmse")
+
+xgb_model <- xgb.train(params = params, data = dtrain, nrounds = 100)
+xgb_importance <- xgb.importance(model = xgb_model)
+
+# Print XGBoost Variable Importance
+cat("\n\033[1mXGBoost Variable Importance:\033[0m\n")
+print(xgb_importance)
+
+# Plot XGBoost Variable Importance
+xgb.plot.importance(xgb_importance, main = "XGBoost Variable Importance")
+
+```
+
+
+3. Fit LASSO Regression
+```{r}
+# Fit a LASSO regression using 10-fold cross-validation
+cv_lasso <- cv.glmnet(X, Y, family = "poisson", alpha = 1)  # LASSO (alpha = 1)
+lasso_coef <- coef(cv_lasso, s = "lambda.min")
+lasso_selected <- lasso_coef[lasso_coef != 0]  # Non-zero coefficients
+
+# Print LASSO Selected Predictors (Non-Zero Coefficients)
+cat("\n\033[1mLASSO Selected Predictors (Non-Zero Coefficients):\033[0m\n")
+print(lasso_selected)
+
+```
+
+
+Elastic Net Regression
+
+```{r}
+# Fit an Elastic Net regression using 10-fold cross-validation
+cv_elastic <- cv.glmnet(X, Y, family = "poisson", alpha = 0.5)  # Elastic Net (alpha = 0.5)
+elastic_coef <- coef(cv_elastic, s = "lambda.min")
+
+```
+
+
+4. Compare LASSO & Elastic Net Regression
+```{r}
+# Compare LASSO vs Elastic Net coefficients
+coef_comparison <- data.frame(
+  Variable = rownames(lasso_coef),
+  LASSO = as.vector(lasso_coef),
+  Elastic_Net = as.vector(elastic_coef)
+)
+
+# Print LASSO vs Elastic Net Coefficients
+cat("\n\033[1mLASSO vs Elastic Net Coefficients:\033[0m\n")
+print(coef_comparison)
+```
+

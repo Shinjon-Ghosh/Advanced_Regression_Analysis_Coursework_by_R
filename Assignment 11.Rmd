@@ -1,0 +1,106 @@
+---
+title: "Assignment 11"
+author: "Shinjon Ghosh"
+date: "2025-04-18"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading Libraries
+```{r}
+library(rstan)
+library(brms)
+
+# Simulate 100 variables from standard normal distributions
+set.seed(123)
+n <- 100
+X <- matrix(rnorm(n * 100), nrow = n, ncol = 100)
+
+# Calculate the mean parameter µ_i
+mu <- 2 * X[, 1] + X[, 2] + 0.5 * X[, 5] + 1.5 * X[, 10]
+
+# Generate the count response Y_i from Poisson(µ_i)
+Y <- rpois(n, mu)
+```
+
+
+1.Stan Bayesian Model with Normal Priors
+```{r}
+stan_model_normal <- "
+data {
+  int<lower=0> N;  // number of observations
+  int<lower=0> Y[N];  // count response
+  matrix[N, 4] X;  // predictor matrix
+}
+parameters {
+  vector[4] beta;  // regression coefficients
+}
+model {
+  beta ~ normal(0, 10);  // Normal prior
+  Y ~ poisson_log(X * beta);  // Poisson likelihood
+}
+"
+
+# Remove any NA values from Y
+valid_indices <- !is.na(Y)
+X <- X[valid_indices, ]
+Y <- Y[valid_indices]
+n <- length(Y)
+
+# Prepare data for Stan
+stan_data <- list(N = n, Y = Y, X = X[, c(1, 2, 5, 10)])
+
+
+# Fit the model
+fit_normal <- stan(model_code = stan_model_normal, data = stan_data, iter = 2000, chains = 2)
+print(fit_normal)
+```
+
+
+2. Stan Bayesian Poisson regression model with Laplace Prior
+```{r}
+stan_model_laplace <- "
+data {
+  int<lower=0> N;  // number of observations
+  int<lower=0> Y[N];  // count response
+  matrix[N, 4] X;  // predictor matrix
+}
+parameters {
+  vector[4] beta;  // regression coefficients
+}
+model {
+  beta ~ double_exponential(0, 1);  // Laplace prior
+  Y ~ poisson_log(X * beta);  // Poisson likelihood
+}
+"
+
+# Fit the model
+fit_laplace <- stan(model_code = stan_model_laplace, data = stan_data, iter = 2000, chains = 2)
+print(fit_laplace)
+```
+
+
+3. Comparison of coefficients in both models
+```{r}
+# Extract coefficients
+beta_normal <- extract(fit_normal)$beta
+beta_laplace <- extract(fit_laplace)$beta
+
+# Summary statistics
+summary_normal <- apply(beta_normal, 2, mean)
+summary_laplace <- apply(beta_laplace, 2, mean)
+
+# Print the comparison
+comparison <- data.frame(
+  Predictor = c("X1", "X2", "X5", "X10"),
+  Normal_Prior = summary_normal,
+  Laplace_Prior = summary_laplace
+)
+print(comparison)
+```
+
+From the comparison table, it can be seen that coefficient of the Normal Prior and the Laplace Prior model are approximately the same and comparing them to our specified linear equation they have significant differences in their coefficients.
+

@@ -1,0 +1,39 @@
+---
+title: "Regression Assignment 1"
+author: "Shinjon Ghosh"
+date: "2025-01-17"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+data(iris)
+names(iris)
+head(iris)
+```
+
+```{r}
+ir1 <- lm(Petal.Length ~ Petal.Width, data = iris)
+summary (ir1)
+```
+
+```{r}
+plot(iris$Petal.Width, iris$Petal.Length, 
+     xlab = "Petal Width", ylab = "Petal Length", 
+     main = "Scatterplot with Regression Line",
+     pch = 19, col = "blue")
+abline(ir1, col = "red", lwd = 2)
+
+```
+```{r}
+qqnorm(resid(ir1), main = "QQ Plot of Residuals")
+qqline(resid(ir1), col = "red", lwd = 2)
+
+```
+

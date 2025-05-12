@@ -1,0 +1,60 @@
+---
+title: "Assignment 2"
+author: "Shinjon Ghosh"
+date: "2025-01-24"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+Basal = c(1, 1.5, -2.5, -2.5, -1, -5.5, -2.5, -4.5, 0, -1, -2, -1.5, -3.5, 1, -2, -0.5, -3.5, -3.5, -2.5, -3.5,-0.5, 0)
+DRTA = c(2, -1, 0, 0.5, -1.5, -1, 2, 1.5, -0.5, -1.5, 0, -0.5, 2, -0.5, 1, 4.5, 2, -1.5, 2.5, 0.5, 1.5, 1)
+```
+1. Null Hypothesis 
+   Alternative Hypothesis
+   
+2.  
+```{r}
+data <- data.frame(
+Change = c(Basal, DRTA),
+Method = rep(c("Basal", "DRTA"), times = c(length(Basal), length(DRTA)))
+)
+```
+
+# Histogram
+```{r}
+ggplot(data, aes(x = Change, fill = Method)) +
+geom_histogram(position = "dodge", bins = 10, alpha = 0.7) +
+labs(title = "Distribution of Comprehension Change", x = "Change", y =
+"Frequency") +
+theme_minimal()
+```
+
+# Boxplot
+```{r}
+ggplot(data, aes(x = Method, y = Change, fill = Method)) +
+geom_boxplot(alpha = 0.7) +
+labs(title = "Boxplot of Comprehension Change by Method", x = "Method", y =
+"Change") +
+theme_minimal()
+```
+
+```{r}
+
+# two-sample t-test (with equal variance)
+t_test_result <- t.test(Basal, DRTA, var.equal = TRUE)
+
+print(t_test_result)
+
+```
+3. p-value = 4.268e-05
+
+4. We reject the null hypothesis since the p-value is less than the alpha value of 0.05. The data provide strong evidence that the average reading comprehension change is significantly different between the two methods. The DRTA method shows a positive average improvement (0.59) compared to the Basal method, which has a negative average change (−1.77). This suggests that the DRTA method is more effective in improving reading comprehension than the Basal method.

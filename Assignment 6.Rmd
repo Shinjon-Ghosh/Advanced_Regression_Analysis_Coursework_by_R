@@ -1,0 +1,136 @@
+---
+title: "Assignment 6"
+author: "Shinjon Ghosh"
+date: "2025-02-21"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Loading Libraries 
+```{r}
+library(MASS)
+library(ggplot2)
+library(randomForest)
+library(xgboost)
+library(lattice)
+library(caret)
+
+```
+
+
+Setting seed for constant reproduction.
+```{r}
+set.seed(1234)
+```
+
+Question 1.
+Simulate ten variables from standard normal distributions
+```{r}
+n <- 100
+X <- as.data.frame(matrix(rnorm(n * 10), nrow = n, ncol = 10))
+colnames(X) <- paste0("X", 1:10)
+```
+
+Question 2
+compute the mean parameter
+```{r}
+mu <- 1 + 2 * X$X1 + X$X2 + 0.5 * X$X5 + 1.5 * X$X10
+```
+
+Question 3
+Generate Y count response from poisson distribution
+```{r}
+Y <- rpois(n, lambda = exp(mu)) 
+```
+
+Combining the data into a single data frame
+```{r}
+data <- cbind(X, Y)
+```
+
+Question 4
+Randomly splitting data into 80% training and 20% testing
+```{r}
+set.seed(123)
+train_indices <- sample(1:n, size = 0.8 * n)
+train_data <- data[train_indices, ]
+test_data <- data[-train_indices, ]
+
+# Separate predictors and response
+X_train <- train_data[, -ncol(train_data)]
+Y_train <- train_data$Y
+X_test <- test_data[, -ncol(test_data)]
+Y_test <- test_data$Y
+```
+
+Question 5
+Fit Poisson regression model
+```{r}
+# Fit a Poisson regression model
+poisson_model <- glm(Y_train ~ ., data = train_data, family = poisson())
+
+# Check if the estimated coefficients match the actual ones
+summary(poisson_model)
+
+# Make predictions on the test dataset
+poisson_predictions <- predict(poisson_model, newdata = test_data, type = "response")
+
+```
+```{r}
+comparison <- data.frame(Actual = Y_test, Predicted = poisson_predictions)
+print(comparison)
+```
+
+
+Fitting a Negative Binomial regression
+```{r}
+# Fit a negative binomial regression model
+nb_model <- glm.nb(Y_train ~ ., data = train_data)
+
+# Make predictions on the test dataset
+nb_predictions <- predict(nb_model, newdata = test_data, type = "response")
+```
+
+Question 6 
+Fit a Random forest model
+```{r}
+
+# Fit a random forest model
+rf_model <- randomForest(Y_train ~ ., data = train_data)
+
+# Make predictions on the test dataset
+rf_predictions <- predict(rf_model, newdata = test_data)
+```
+
+Question 7
+Fit an Extreme Gradient Boosting (XGBoost) model
+```{r}
+# Prepare the data for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = Y_train)
+dtest <- xgb.DMatrix(data = as.matrix(X_test))
+
+# Define parameters
+params <- list(objective = "count:poisson", eval_metric = "rmse")
+
+# Train the XGBoost model
+xgb_model <- xgb.train(params, dtrain, nrounds = 100)
+
+# Make predictions on the test dataset
+xgb_predictions <- predict(xgb_model, dtest)
+```
+
+Question 8
+Print Predictions
+```{r}
+print("poisson_predictions:")
+print(poisson_predictions)
+print("Negative Binomial Predictions:")
+print(nb_predictions)
+print("Random Forest Predictions:")
+print(rf_predictions)
+print("XGBoost Predictions:")
+print(xgb_predictions)
+```
